@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrialScreen — Client Pitch</title>
+<meta name="description" content="Presentation deck for the TrialScreen prototype: the recruitment bottleneck, why explainability is the wedge, and how the system is built.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Dark ground, so every cut to the light app reads as a change of gear. */
+  --ink:#0E100F; --ink-2:#161A18; --ink-3:#1D2220;
+  --line:#2C332F; --line-2:#3A423D;
+  --paper:#F6F7F5; --muted:#9AA39D; --faint:#69726C;
+  --accent:#A98BD4; --accent-dim:#5C4485;
+  --pass:#6EC49B; --flag:#E8B45C; --fail:#E07B7B;
+  --teal:#12BFC0; --amber:#FDC22D; --orange:#FA6E28;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;overflow:hidden}
+body{
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  color:var(--paper); font-feature-settings:"tnum" 1;
+  -webkit-font-smoothing:antialiased; display:grid; place-items:center;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+
+/* A fixed 16:9 stage scaled to the window, so the capture frame is exact
+   however the recording window is sized. */
+#stage{width:1280px;height:720px;position:relative;flex:none;background:var(--ink);overflow:hidden}
+
+/* Content is centred as a group, so a short slide reads as composed rather
+   than as a headline stranded above a void. */
+.slide{position:absolute;inset:0;padding:106px 84px 84px;display:none;flex-direction:column;justify-content:center}
+.slide.is-active{display:flex}
+
+/* ---- persistent chrome ---------------------------------------------- */
+#logo{position:absolute;top:38px;left:84px;z-index:20;display:flex;align-items:center;gap:10px}
+#logo svg{height:28px;width:28px;flex:none}
+#logo span{font-size:16px;font-weight:600;letter-spacing:-.02em}
+#chrome{position:absolute;left:0;right:0;bottom:0;z-index:20;transition:opacity .2s}
+body.clean #chrome{opacity:0;pointer-events:none}
+#bar{height:2px;background:var(--line)}
+#bar span{display:block;height:100%;background:var(--accent);width:0;transition:width .45s cubic-bezier(.4,0,.2,1)}
+#meta{display:flex;justify-content:space-between;align-items:center;padding:14px 84px 22px;font-size:12.5px;color:var(--faint)}
+#meta b{color:var(--muted);font-weight:500}
+
+h1{font-size:60px;line-height:1.06;letter-spacing:-.028em;font-weight:600;max-width:17ch}
+h2{font-size:40px;line-height:1.12;letter-spacing:-.024em;font-weight:600;max-width:20ch}
+h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.lede{font-size:19px;line-height:1.6;color:var(--muted);max-width:56ch;margin-top:18px}
+.tiny{font-size:13px;line-height:1.55;color:var(--faint)}
+.head{margin-bottom:30px}
+.body{flex:0 1 auto;min-height:0;width:100%}
+
+/* ---- entry motion: one orchestrated moment per slide ------------------ */
+[data-rise]{opacity:0;transform:translateY(14px)}
+.is-active [data-rise]{animation:rise .62s cubic-bezier(.2,.7,.3,1) forwards;animation-delay:var(--d,0ms)}
+@keyframes rise{to{opacity:1;transform:none}}
+
+/* Staged mode (?staged=1, used when recording): nothing arrives until it is
+   called for, so points land as the narration reaches them rather than all
+   inside the first second of a forty-second slide. */
+body.staged .is-active [data-rise]{animation:none;opacity:0;transform:translateY(14px)}
+body.staged .is-active [data-rise].shown{animation:rise .62s cubic-bezier(.2,.7,.3,1) forwards;animation-delay:0ms}
+
+/* The animations inside a card are keyed to slide entry, which in staged mode
+   would finish long before the card itself arrives. Re-key them to the reveal
+   so the ticks, the stamp and the connectors play when you actually see them. */
+body.staged .is-active .crit{animation:none;opacity:.18}
+body.staged .is-active .crit i{animation:none}
+body.staged .is-active [data-rise].shown .crit{animation:lightup .35s ease-out forwards;animation-delay:calc(260ms + var(--i) * 230ms)}
+body.staged .is-active [data-rise].shown .crit i{animation:tick .3s ease-out forwards;animation-delay:calc(440ms + var(--i) * 230ms)}
+body.staged .is-active .stamp{animation:none;opacity:0}
+body.staged .is-active [data-rise].shown .stamp{animation:stampin .45s cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:700ms}
+body.staged .is-active .link path{animation:none;stroke-dashoffset:40}
+body.staged .is-active [data-rise].shown .link path{animation:draw .5s ease-out forwards;animation-delay:var(--d,0ms)}
+
+/* ---- slide 2: the manual ledger -------------------------------------- */
+.chart{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:22px 24px;width:430px}
+.chart-top{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}
+.crit{display:flex;align-items:center;gap:11px;padding:7px 0;opacity:.18}
+.is-active .crit{animation:lightup .35s ease-out forwards;animation-delay:calc(700ms + var(--i) * 230ms)}
+@keyframes lightup{to{opacity:1}}
+.crit i{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line-2);flex:none;display:grid;place-items:center;font-size:10px;font-style:normal;color:var(--ink)}
+.is-active .crit i{animation:tick .3s ease-out forwards;animation-delay:calc(880ms + var(--i) * 230ms)}
+@keyframes tick{to{background:var(--pass);border-color:var(--pass);color:var(--ink)}}
+.crit span{height:8px;border-radius:4px;background:var(--line-2)}
+.crit em{font-style:normal;font-size:13px;color:var(--muted)}
+.clock{font-size:52px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.clock small{display:block;font-size:13px;font-weight:400;color:var(--faint);letter-spacing:0;margin-top:6px}
+
+/* ---- generic cards --------------------------------------------------- */
+.cols{display:grid;gap:18px}
+.c3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card p{font-size:14.5px;line-height:1.62;color:var(--muted);margin-top:9px}
+.role{font-size:12px;color:var(--accent);font-weight:500}
+
+/* ---- slide 4: the black box ------------------------------------------ */
+.bb{display:flex;align-items:center;gap:20px;margin-top:6px}
+.bb-node{background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-size:14px;color:var(--muted);text-align:center;min-width:132px}
+.bb-box{background:#000;border:1px solid var(--line-2);border-radius:12px;width:132px;height:88px;display:grid;place-items:center;font-size:30px;color:var(--faint)}
+.bb-arrow{width:34px;height:1px;background:var(--line-2);position:relative;flex:none}
+.bb-arrow:after{content:"";position:absolute;right:0;top:-3px;border-left:6px solid var(--line-2);border-top:3.5px solid transparent;border-bottom:3.5px solid transparent}
+.stamp{border:2px solid var(--fail);color:var(--fail);border-radius:8px;padding:7px 13px;font-size:13px;font-weight:600;transform:rotate(-7deg);opacity:0}
+.is-active .stamp{animation:stampin .45s cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:1150ms}
+@keyframes stampin{from{opacity:0;transform:rotate(-7deg) scale(1.5)}to{opacity:1;transform:rotate(-7deg) scale(1)}}
+
+/* ---- slide 5: the pipeline ------------------------------------------- */
+.pipe{display:flex;align-items:stretch;gap:0;margin-top:4px}
+.stage-box{flex:1;border:1px solid var(--line);background:var(--ink-2);border-radius:14px;padding:20px 18px;text-align:center}
+.stage-box.engine{border-color:var(--accent);background:linear-gradient(180deg,rgba(169,139,212,.14),rgba(169,139,212,.04))}
+.stage-box h3{font-size:15px}
+.stage-box p{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.5}
+.stage-box .kind{font-size:11px;letter-spacing:.06em;color:var(--faint);margin-bottom:9px}
+.stage-box.engine .kind{color:var(--accent)}
+.link{flex:none;width:44px;display:grid;place-items:center}
+.link svg{overflow:visible}
+.link path{stroke:var(--line-2);stroke-width:1.5;fill:none;stroke-dasharray:40;stroke-dashoffset:40}
+.is-active .link path{animation:draw .5s ease-out forwards;animation-delay:var(--d,0ms)}
+@keyframes draw{to{stroke-dashoffset:0}}
+.punch{font-size:27px;font-weight:600;letter-spacing:-.02em;margin-top:34px}
+.punch b{color:var(--accent);font-weight:600}
+
+/* ---- slide 6: shot list ---------------------------------------------- */
+.shots{counter-reset:s;display:grid;grid-template-columns:1fr 1fr;gap:10px 30px;margin-top:6px}
+.shot{counter-increment:s;display:flex;gap:13px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.shot:before{content:counter(s);font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent);width:16px;flex:none;padding-top:2px}
+.shot div{font-size:14px;line-height:1.5}
+.shot em{font-style:normal;display:block;color:var(--faint);font-size:12.5px;margin-top:2px}
+
+/* ---- slide 7: architecture ------------------------------------------- */
+.arch{display:flex;align-items:center;gap:0;margin-top:2px}
+.wire{flex:none;width:40px;display:flex;flex-direction:column;justify-content:center;gap:42px}
+.wire svg{overflow:visible}
+.wire path{stroke:var(--line-2);stroke-width:1.5;fill:none;stroke-dasharray:46;stroke-dashoffset:46}
+.is-active .wire path{animation:draw .55s ease-out forwards;animation-delay:var(--d,0ms)}
+.worker{flex:1;border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--ink-2);position:relative}
+.worker>.tag{position:absolute;top:-9px;left:18px;background:var(--ink);padding:0 9px;font-size:11px;letter-spacing:.06em;color:var(--faint)}
+.trust{border:1px dashed var(--accent);border-radius:12px;padding:15px;background:rgba(169,139,212,.07);margin-top:12px}
+.trust .tag{font-size:11px;letter-spacing:.06em;color:var(--accent)}
+.svc{border:1px solid var(--line);border-radius:12px;padding:15px 17px;background:var(--ink-2);width:216px}
+.svc h3{font-size:14px}
+.svc p{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}
+.svc .cf{font-size:10.5px;letter-spacing:.07em;color:var(--orange);margin-bottom:6px}
+.stack{display:flex;flex-direction:column;gap:12px}
+
+/* ---- slide 8: evidence ----------------------------------------------- */
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.num{border:1px solid var(--line);border-radius:14px;padding:20px 22px;background:var(--ink-2)}
+.num b{display:block;font-size:42px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.num>span{display:block;font-size:13px;color:var(--muted);margin-top:9px;line-height:1.5}
+.num b span{font-size:20px;font-weight:500;margin-left:2px}
+.defect{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.defect i{font-style:normal;color:var(--fail);font-size:15px;line-height:1.5}
+.defect div{font-size:14.5px;line-height:1.55}
+.defect em{font-style:normal;display:block;color:var(--muted);font-size:13px;margin-top:3px}
+
+/* ---- slide 9 --------------------------------------------------------- */
+.next{display:grid;grid-template-columns:repeat(2,1fr);gap:9px 30px;margin-top:4px}
+.next div{font-size:14.5px;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--line)}
+
+.kbd{font-family:"IBM Plex Mono",monospace;font-size:11px;border:1px solid var(--line-2);border-radius:4px;padding:1px 5px;color:var(--muted)}
+
+/* Motion is the point of this file, but never at someone's expense. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-delay:0ms !important;transition-duration:.01ms !important}
+  [data-rise],.crit{opacity:1;transform:none}
+  .stamp{opacity:1}
+  .link path{stroke-dashoffset:0}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="logo">
+    <!-- The product's mark: a criterion ledger seen end-on. Three rows, each
+         carrying its verdict colour, the bars falling away down the stack. -->
+    <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+      <rect width="24" height="24" rx="6.5" fill="var(--paper)"/>
+      <rect x="4.7" y="5.7" width="2.6" height="2.6" rx="1.3" fill="#2E6B4F"/>
+      <rect x="9.3" y="6.25" width="10" height="1.5" rx=".75" fill="var(--ink)" opacity=".45"/>
+      <rect x="4.7" y="10.7" width="2.6" height="2.6" rx="1.3" fill="#8A5D0F"/>
+      <rect x="9.3" y="11.25" width="7.4" height="1.5" rx=".75" fill="var(--ink)" opacity=".45"/>
+      <rect x="4.7" y="15.7" width="2.6" height="2.6" rx="1.3" fill="#9E2B2B"/>
+      <rect x="9.3" y="16.25" width="4.8" height="1.5" rx=".75" fill="var(--ink)" opacity=".45"/>
+    </svg>
+    <span>TrialScreen</span>
+  </div>
+
+  <!-- 1 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="body">
+      <h1 data-rise style="--d:0ms">Eligibility screening that shows its working.</h1>
+      <p class="lede" data-rise style="--d:220ms">
+        A working prototype for clinical trial patient recruitment — and for the reason
+        every previous attempt stalled.
+      </p>
+      <p class="tiny" data-rise style="--d:360ms;margin-top:38px">
+        Synthetic patient records throughout. No real patient data is used anywhere in this demo.
+      </p>
+    </div>
+  </section>
+
+  <!-- 2 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise data-order="1">Recruitment is where trials stall.</h2>
+    </div>
+    <div class="body" style="display:flex;gap:56px;align-items:flex-start">
+      <div style="flex:1">
+        <p class="lede" data-rise data-order="3" style="--d:120ms;margin-top:0">
+          A single protocol carries 20 to 50 eligibility criteria. Today a coordinator opens
+          one chart at a time and checks it against every one of them, by hand.
+        </p>
+        <p class="lede" data-rise data-order="4" style="--d:240ms">
+          Most trials miss their enrolment timeline, and recruitment is the largest single
+          reason why. Every week of delay is a week the drug is not reaching anyone.
+        </p>
+        <!-- Drop a figure your team has verified into the line above if you have one.
+             I have deliberately not invented a number here. -->
+        <div data-rise data-order="5" style="--d:380ms;margin-top:28px">
+          <div class="clock"><span id="weeks">1</span> weeks<small>to screen a single site's cohort</small></div>
+        </div>
+      </div>
+
+      <div class="chart" data-rise data-order="2" style="--d:180ms">
+        <div class="chart-top">
+          <span class="mono" style="font-size:12px;color:var(--faint)">TS-0142</span>
+          <span class="tiny">checked by hand</span>
+        </div>
+        <div class="crit" style="--i:0"><i>✓</i><em>Age 40–65 years</em></div>
+        <div class="crit" style="--i:1"><i>✓</i><em>Type 2 diabetes ≥ 2 years</em></div>
+        <div class="crit" style="--i:2"><i>✓</i><em>HbA1c 7.5–10%</em></div>
+        <div class="crit" style="--i:3"><i>✓</i><em>eGFR ≥ 45</em></div>
+        <div class="crit" style="--i:4"><i>✓</i><em>No anticoagulants</em></div>
+        <div class="crit" style="--i:5"><i>✓</i><em>Not pregnant</em></div>
+        <div class="crit" style="--i:6"><i>✓</i><em>ALT ≤ 120 U/L</em></div>
+        <div class="crit" style="--i:7"><i>✓</i><em>No heart failure</em></div>
+        <p class="tiny" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+          …and 32 more. Then the next patient.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>Three people have to say yes.</h2>
+    </div>
+    <div class="body">
+      <div class="cols c3">
+        <div class="card" data-rise style="--d:100ms">
+          <p class="role">Uses it daily</p>
+          <h3 style="margin-top:7px">Clinical research coordinator</h3>
+          <p>Screens the cohort and works the review queue. Today that is weeks of chart
+          review, and the part of the job most likely to be done under time pressure.</p>
+        </div>
+        <div class="card" data-rise style="--d:210ms">
+          <p class="role">Pays for it</p>
+          <h3 style="margin-top:7px">Trial lead, clinical operations</h3>
+          <p>Owns the enrolment timeline and the budget it consumes. Needs to know which
+          criterion is costing the most enrolment, not just how many patients are left.</p>
+        </div>
+        <div class="card" data-rise style="--d:320ms">
+          <p class="role">Can veto it</p>
+          <h3 style="margin-top:7px">Quality and regulatory</h3>
+          <p>Must be able to reconstruct any screening decision, months later, from the
+          record. If that is not possible, the tool does not get used.</p>
+        </div>
+      </div>
+      <p class="lede" data-rise style="--d:440ms">
+        A tool that satisfies only the first two never ships. That is the whole design
+        constraint.
+      </p>
+    </div>
+  </section>
+
+  <!-- 4 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>The answer was never the hard part.</h2>
+    </div>
+    <div class="body">
+      <div class="bb" data-rise style="--d:140ms">
+        <div class="bb-node">Patient record</div>
+        <div class="bb-arrow"></div>
+        <div class="bb-box">?</div>
+        <div class="bb-arrow"></div>
+        <div class="bb-node" style="color:var(--paper)">“Eligible”</div>
+        <div style="margin-left:14px"><span class="stamp">NOT ACCEPTED</span></div>
+      </div>
+
+      <div class="cols c3" style="margin-top:44px">
+        <div class="card" data-rise style="--d:300ms">
+          <h3>No audit trail</h3>
+          <p>A regulator cannot inspect a probability. Screening decisions have to be
+          reproducible from the record, years after the fact.</p>
+        </div>
+        <div class="card" data-rise style="--d:400ms">
+          <h3>No clinical trust</h3>
+          <p>An investigator will not enrol a patient on reasoning they are not allowed to
+          check — and should not.</p>
+        </div>
+        <div class="card" data-rise style="--d:500ms">
+          <h3>So it stays a pilot</h3>
+          <p>The models work. They just never make it out of the evaluation phase, because
+          nobody can sign the result.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>So we split the job in three.</h2>
+    </div>
+    <div class="body">
+      <div class="pipe" data-rise style="--d:120ms">
+        <div class="stage-box">
+          <p class="kind">AI</p>
+          <h3>Reads the protocol</h3>
+          <p>Turns written criteria into structured rules a human approves before anyone is screened.</p>
+        </div>
+        <div class="link" style="--d:560ms"><svg width="44" height="14" viewBox="0 0 44 14"><path d="M2 7 H38 M32 2 L38 7 L32 12"/></svg></div>
+        <div class="stage-box engine">
+          <p class="kind">NO AI</p>
+          <h3>The rule engine decides</h3>
+          <p>Pure TypeScript. No network, no randomness, no clock. The same inputs always give the same answer.</p>
+        </div>
+        <div class="link" style="--d:760ms"><svg width="44" height="14" viewBox="0 0 44 14"><path d="M2 7 H38 M32 2 L38 7 L32 12"/></svg></div>
+        <div class="stage-box">
+          <p class="kind">AI</p>
+          <h3>Writes it up</h3>
+          <p>A short note in plain language, composed only from the results the engine produced.</p>
+        </div>
+      </div>
+
+      <p class="punch" data-rise style="--d:900ms">The model never decides <b>who is eligible</b>.</p>
+      <p class="lede" data-rise style="--d:1000ms;margin-top:12px">
+        It translates English into rules at the front, and results into English at the back.
+        Every verdict in between is arithmetic you can re-derive by hand.
+      </p>
+    </div>
+  </section>
+
+  <!-- 6 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>Let's look at it.</h2>
+      <p class="lede" data-rise style="--d:100ms">RENAL-PROTECT, against a cohort of 50 synthetic patients.</p>
+    </div>
+    <div class="body">
+      <div class="shots">
+        <div class="shot" data-rise style="--d:200ms"><div>Paste the criteria, press <b>Read the criteria</b><em>Nine rules in about five seconds</em></div></div>
+        <div class="shot" data-rise style="--d:250ms"><div>Every rule shows the phrase it came from<em>Traceable back to the protocol, line by line</em></div></div>
+        <div class="shot" data-rise style="--d:300ms"><div>Rule 9 reads <span class="mono">hgb ≥ 10</span><em>An exclusion, correctly inverted</em></div></div>
+        <div class="shot" data-rise style="--d:350ms"><div><b>Screen 50 patients</b><em>114 milliseconds — say the number out loud</em></div></div>
+        <div class="shot" data-rise style="--d:400ms"><div>The funnel: 9 eligible, 23 in review, 18 out<em>Then: which criterion is costing the most enrolment</em></div></div>
+        <div class="shot" data-rise style="--d:450ms"><div>Open <span class="mono">TS-0073</span><em>HbA1c drawn 428 days ago — flagged, not failed</em></div></div>
+        <div class="shot" data-rise style="--d:500ms"><div>Open <span class="mono">TS-0104</span>, then <b>Accept for screening</b><em>Apixaban caught by drug class; the funnel moves 9 → 10</em></div></div>
+        <div class="shot" data-rise style="--d:550ms"><div>Export the report, then the audit log<em>Who ran what, when, and against which criteria</em></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>How it is built.</h2>
+    </div>
+    <div class="body">
+      <div class="arch">
+        <div class="worker" data-rise style="--d:120ms">
+          <span class="tag">CLOUDFLARE WORKER</span>
+          <h3>Next.js 16 · React 19 · TypeScript</h3>
+          <p style="font-size:13px;color:var(--muted);margin-top:7px;line-height:1.5">
+            Server-rendered at the edge through OpenNext. Sessions are signed cookies; roles
+            are checked server-side on every request.
+          </p>
+          <div class="trust">
+            <p class="tag">TRUST BOUNDARY — NO AI INSIDE</p>
+            <h3 style="margin-top:7px">The rule engine</h3>
+            <p style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5">
+              Pure functions over the patient record. Deterministic, covered by 29 tests,
+              and the only thing in the system that produces a verdict.
+            </p>
+          </div>
+        </div>
+
+        <div class="wire">
+          <svg width="40" height="30" viewBox="0 0 40 30" style="--d:280ms"><path d="M0 22 H18 Q26 22 26 12 H34 M28 7 L34 12 L28 17"/></svg>
+          <svg width="40" height="30" viewBox="0 0 40 30" style="--d:380ms"><path d="M0 8 H18 Q26 8 26 18 H34 M28 13 L34 18 L28 23"/></svg>
+        </div>
+
+        <div class="stack">
+          <div class="svc" data-rise style="--d:300ms">
+            <p class="cf">CLOUDFLARE</p>
+            <h3>Workers AI</h3>
+            <p>Llama 3.3 70B in JSON-schema mode. Reads the protocol and writes the notes. Never decides.</p>
+          </div>
+          <div class="svc" data-rise style="--d:400ms">
+            <p class="cf">CLOUDFLARE</p>
+            <h3>D1</h3>
+            <p>Every screening run and every reviewer decision, stored against a name and a timestamp.</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="lede" data-rise style="--d:560ms;margin-top:30px">
+        One platform, no servers to run, and nothing in the stack that bills per seat while
+        it sits idle.
+      </p>
+    </div>
+  </section>
+
+  <!-- 8 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>What the prototype proves.</h2>
+    </div>
+    <div class="body">
+      <div class="nums">
+        <div class="num" data-rise style="--d:100ms"><b>114<span>ms</span></b><span>to screen 50 patients against 9 criteria</span></div>
+        <div class="num" data-rise style="--d:190ms"><b>29</b><span>tests over the rule engine, all passing</span></div>
+        <div class="num" data-rise style="--d:280ms"><b>0</b><span>real patient records, anywhere in the system</span></div>
+      </div>
+
+      <h3 data-rise style="--d:400ms;margin-top:38px;font-size:17px">Reading every criterion twice caught two real defects</h3>
+      <div data-rise style="--d:480ms;margin-top:10px">
+        <div class="defect">
+          <i>✗</i>
+          <div>An exclusion read backwards
+            <em>“Haemoglobin below 10 g/dL” became <span class="mono">hgb ≤ 10</span>. It would have excluded 49 of 50 otherwise-eligible patients — silently.</em>
+          </div>
+        </div>
+        <div class="defect">
+          <i>✗</i>
+          <div>A dropped duration
+            <em>“for at least 5 years” quietly became a presence check, admitting patients the protocol excludes.</em>
+          </div>
+        </div>
+      </div>
+      <p class="lede" data-rise style="--d:600ms;margin-top:18px">
+        Both were caught because every criterion is read twice and a human is shown the
+        disagreement. That is the product, demonstrating itself.
+      </p>
+    </div>
+  </section>
+
+  <!-- 9 ---------------------------------------------------------------- -->
+  <section class="slide">
+    <div class="head">
+      <h2 data-rise>What production looks like.</h2>
+    </div>
+    <div class="body">
+      <div class="next">
+        <div data-rise style="--d:110ms">EHR and FHIR ingestion, replacing the synthetic cohort</div>
+        <div data-rise style="--d:160ms">Multi-site trials with per-site enrolment targets</div>
+        <div data-rise style="--d:210ms">Criterion weighting, when a sponsor wants priorities</div>
+        <div data-rise style="--d:260ms">Handoff into pre-screening and e-consent</div>
+        <div data-rise style="--d:310ms">A standing evaluation set for the parsing step</div>
+        <div data-rise style="--d:360ms">SSO, per-site roles, and a real user directory</div>
+      </div>
+
+      <p class="punch" data-rise style="--d:480ms;margin-top:40px">
+        The prototype exists to prove the hard part:<br>a screening decision a clinician can <b>check</b>.
+      </p>
+
+      <p class="tiny mono" data-rise style="--d:620ms;margin-top:46px">
+        github.com/AdiGaikwad90/trialscreen
+      </p>
+    </div>
+  </section>
+
+  <div id="chrome">
+    <div id="bar"><span></span></div>
+    <div id="meta">
+      <span>TrialScreen</span>
+      <span><b id="num">1</b> / <span id="tot">9</span> &nbsp;·&nbsp; <span class="kbd">→</span> next &nbsp; <span class="kbd">R</span> replay &nbsp; <span class="kbd">H</span> hide &nbsp; <span class="kbd">F</span> full</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage');
+  const slides = [...document.querySelectorAll('.slide')];
+  const fill = document.querySelector('#bar span');
+  const num = document.getElementById('num');
+  document.getElementById('tot').textContent = slides.length;
+  let i = 0;
+
+  // Scale the fixed 1280x720 stage to the window so the recording frame is
+  // identical whatever size the presenter's window happens to be.
+  const fit = () => {
+    const s = Math.min(innerWidth / 1280, innerHeight / 720);
+    stage.style.transform = `scale(${s})`;
+  };
+  addEventListener('resize', fit);
+  fit();
+
+  let weekTimer;
+  function runCounter() {
+    // The week counter is the point of slide 2: the cost is time, not effort.
+    const el = document.getElementById('weeks');
+    if (!el || !slides[i].contains(el)) return;
+    if (document.body.classList.contains("staged") && !el.closest("[data-rise]")?.classList.contains("shown")) return;
+    clearInterval(weekTimer);
+    let w = 1;
+    el.textContent = w;
+    weekTimer = setInterval(() => {
+      w += 1;
+      el.textContent = w;
+      if (w >= 6) clearInterval(weekTimer);
+    }, 620);
+  }
+
+  function show(next, replay) {
+    clearInterval(weekTimer);
+    i = (next + slides.length) % slides.length;
+    slides.forEach(s => s.classList.remove('is-active'));
+    // Force a reflow so re-adding the class restarts every entry animation —
+    // this is what makes R a clean retake rather than a no-op.
+    void slides[i].offsetWidth;
+    slides[i].classList.add('is-active');
+    fill.style.width = ((i + 1) / slides.length * 100) + '%';
+    num.textContent = i + 1;
+    runCounter();
+    if (!replay) location.hash = i + 1;
+  }
+
+  addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(i - 1); }
+    else if (k === 'r') show(i, true);
+    else if (k === 'h') document.body.classList.toggle('clean');
+    else if (k === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    else if (k === 'home') show(0);
+    else if (/^[1-9]$/.test(k)) show(+k - 1);
+  });
+
+  // Click the right two-thirds to advance, the left third to go back.
+  stage.addEventListener('click', e => show(e.clientX < innerWidth / 3 ? i - 1 : i + 1));
+
+  // Staged mode is driven from outside (the recorder) so reveals can be spaced
+  // across a slide instead of firing together on entry.
+  const staged = new URLSearchParams(location.search).has("staged");
+  if (staged) document.body.classList.add("staged");
+
+  // Reveal order follows the DOM unless data-order says otherwise — the chart
+  // on slide 2 sits in the right-hand column but is spoken about early.
+  const ordered = () =>
+    [...slides[i].querySelectorAll("[data-rise]")].sort(
+      (a, b) => (+a.dataset.order || 99) - (+b.dataset.order || 99),
+    );
+  const pending = () => ordered().filter((e) => !e.classList.contains("shown"));
+  window.deckCount = () => slides[i].querySelectorAll("[data-rise]").length;
+  window.deckNext = () => {
+    const [next] = pending();
+    if (next) {
+      next.classList.add("shown");
+      // The week counter is the point of slide 2; start it when it appears.
+      if (next.querySelector("#weeks")) runCounter();
+    }
+    return pending().length;
+  };
+  window.deckRevealAll = () =>
+    slides[i].querySelectorAll("[data-rise]").forEach((e) => e.classList.add("shown"));
+  window.deckGo = (n) => show(n - 1);
+
+  const start = parseInt(location.hash.slice(1), 10);
+  show(Number.isInteger(start) && start > 0 ? start - 1 : 0);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+/*
+  TrialScreen design tokens.
+
+  The palette is taken from the lab bench rather than from stock healthcare
+  blue: cool printout paper, graphite ink, and EDTA-lavender as the single
+  brand colour. Verdict colours are deliberately muted — they carry clinical
+  meaning, so they are never neon, and never the only signal (every verdict
+  also carries a glyph and a word).
+*/
+@theme {
+  --color-paper: #f6f7f5;
+  --color-surface: #ffffff;
+  --color-ink: #171a19;
+  --color-ink-muted: #6a716d;
+  --color-ink-faint: #9aa19c;
+  --color-rule: #dde1dd;
+  --color-rule-strong: #c4cac5;
+
+  --color-accent: #4a2c6b;
+  --color-accent-hover: #3b2256;
+  --color-accent-wash: #efeaf5;
+
+  --color-pass: #2e6b4f;
+  --color-pass-wash: #e6f0ea;
+  --color-flag: #8a5d0f;
+  --color-flag-wash: #f8efdd;
+  --color-fail: #9e2b2b;
+  --color-fail-wash: #f6e7e7;
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* Elevation is information: a card that sits above the page is a working
+     surface, a card flush with it is reference material. Two levels, no more. */
+  --shadow-card: 0 1px 2px rgba(23, 26, 25, 0.04), 0 1px 1px rgba(23, 26, 25, 0.03);
+  --shadow-raised: 0 2px 4px rgba(23, 26, 25, 0.05), 0 8px 24px rgba(23, 26, 25, 0.06);
+  --shadow-sheet: -8px 0 40px rgba(23, 26, 25, 0.10);
+}
+
+@layer base {
+  html {
+    /* The canvas colour lives here as well as on body, so a short page or a
+       stray horizontal scroll never exposes bare white beside the layout. */
+    background: var(--color-paper);
+    /* No layout in this app is meant to scroll sideways; anything that wants to
+       scrolls inside its own container. */
+    overflow-x: clip;
+    /* Lab values and ages must column-align everywhere they appear. */
+    font-feature-settings: "tnum" 1, "cv05" 1;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    min-width: 0;
+    overflow-x: clip;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* One visible, consistent focus treatment across the whole app. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--color-accent-wash);
+  }
+}
+
+@layer utilities {
+  /* Identifiers and timestamps only — where character-level scanning is the job. */
+  .id {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: -0.01em;
+  }
+
+  .hairline {
+    border-color: var(--color-rule);
+  }
+
+  /* Reference material: flush with the page, hairline only. */
+  .surface {
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: 0.625rem;
+  }
+
+  /* A working surface: lifted off the page. */
+  .surface-raised {
+    background: var(--color-surface);
+    border: 1px solid var(--color-rule);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
+  }
+}
+
+/* The single orchestrated moment in the app: result rows arriving as the
+   cohort is screened. Everything else responds to a click or stays still. */
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.row-in {
+  animation: row-in 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}

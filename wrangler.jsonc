@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trialscreen",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-18",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": { "enabled": true },
+
+  // Workers AI — parses protocol text and writes screening notes.
+  // Never decides eligibility; that is lib/engine.ts.
+  "ai": { "binding": "AI" },
+
+  // D1 — persisted audit trail of every screening run.
+  // database_id is a placeholder until `wrangler d1 create trialscreen` is run;
+  // local dev (`wrangler dev --local`) uses a local SQLite file and ignores it.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "trialscreen",
+      "database_id": "local-placeholder-replace-after-d1-create",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "vars": {
+    "TRIALSCREEN_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+  }
+}

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 330" width="900" height="330" role="img" aria-label="A browser talks to one Cloudflare Worker running Next.js. Inside it, behind a trust boundary, is the rule engine: pure functions with no network access, the only code that produces a verdict. The Worker calls Workers AI to read the protocol and write notes, and D1 to store runs, decisions and the audit trail.">
+  <style>
+    .t    { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .tag  { font-size: 10.5px; letter-spacing: .09em; fill: #8B93A7; }
+    .h    { font-size: 14px; font-weight: 600; fill: #6E7891; }
+    .p    { font-size: 11.5px; fill: #8B93A7; }
+    .edge { font-size: 11px; fill: #8B93A7; }
+    .box  { fill: #FBFBFA; stroke: #A9B1C2; stroke-width: 1.2; }
+    .inner{ fill: #FFFFFF; stroke: #C4CAC5; stroke-width: 1.1; }
+    .trust{ fill: #7C5BB00F; stroke: #7C5BB0; stroke-width: 1.4; stroke-dasharray: 6 4; }
+    .cf   { fill: #F3802008; stroke: #F38020; stroke-width: 1.2; }
+    .cfT  { fill: #B35A10; }
+    .wire { stroke: #A9B1C2; stroke-width: 1.3; fill: none; }
+    .dash { stroke: #A9B1C2; stroke-width: 1.3; fill: none; stroke-dasharray: 5 4; }
+  </style>
+
+  <!-- client -->
+  <rect class="box" x="6" y="138" width="104" height="54" rx="10"/>
+  <text class="t h" x="58" y="170" text-anchor="middle">Browser</text>
+  <path class="wire" d="M110 165 H146 M138 160 l8 5 -8 5"/>
+
+  <!-- the worker -->
+  <rect class="box" x="146" y="26" width="390" height="278" rx="14"/>
+  <rect fill="#FBFBFA" x="166" y="18" width="226" height="16"/>
+  <text class="t tag" x="172" y="30">ONE CLOUDFLARE WORKER</text>
+
+  <rect class="inner" x="166" y="54" width="350" height="76" rx="10"/>
+  <text class="t h" x="188" y="82">Next.js 16 · React 19 · TypeScript</text>
+  <text class="t p" x="188" y="104">Server-rendered at the edge via OpenNext.</text>
+  <text class="t p" x="188" y="120">Roles checked server-side on every request.</text>
+
+  <path class="wire" d="M341 130 V168"/>
+
+  <rect class="trust" x="166" y="168" width="350" height="116" rx="10"/>
+  <text class="t tag" x="188" y="192" fill="#7C5BB0">TRUST BOUNDARY — NO AI, NO NETWORK</text>
+  <text class="t h" x="188" y="216" fill="#5C4485">lib/engine.ts — the rule engine</text>
+  <text class="t p" x="188" y="238">Pure functions over the patient record.</text>
+  <text class="t p" x="188" y="254">Deterministic, covered by 29 tests, and the</text>
+  <text class="t p" x="188" y="270">only code that may produce a verdict.</text>
+
+  <!-- services -->
+  <path class="dash" d="M536 110 H664 M656 105 l8 5 -8 5"/>
+  <text class="t edge" x="540" y="94">reads the protocol,</text>
+  <text class="t edge" x="540" y="130">writes the notes</text>
+
+  <rect class="cf" x="668" y="62" width="226" height="86" rx="12"/>
+  <text class="t tag cfT" x="688" y="88">CLOUDFLARE</text>
+  <text class="t h" x="688" y="110" fill="#B35A10">Workers AI</text>
+  <text class="t p" x="688" y="130">Llama 3.3 70B, JSON-schema mode</text>
+
+  <path class="dash" d="M536 220 H664 M656 215 l8 5 -8 5"/>
+  <text class="t edge" x="540" y="204">runs, decisions,</text>
+  <text class="t edge" x="540" y="240">the audit trail</text>
+
+  <rect class="cf" x="668" y="172" width="226" height="86" rx="12"/>
+  <text class="t tag cfT" x="688" y="198">CLOUDFLARE</text>
+  <text class="t h" x="688" y="220" fill="#B35A10">D1</text>
+  <text class="t p" x="688" y="240">SQLite at the edge</text>
+
+  <text class="t p" x="6" y="322">The trust boundary is not a policy document you promise to follow. It is a module.</text>
+</svg>

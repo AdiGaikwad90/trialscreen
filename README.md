@@ -25,8 +25,8 @@ This screens a cohort in **114 milliseconds** — and shows the evidence behind 
 
 https://github.com/user-attachments/assets/cd841217-ad4a-41e0-a54b-212fc0350769
 
-
-
+<sub>Also in the repo: [1280×720, 8.9 MB](demo_video/trialscreen-walkthrough.mp4) ·
+[full quality 1600×900, 16 MB](demo_video/trialscreen-walkthrough-full.mp4)</sub>
 
 ---
 
@@ -100,28 +100,7 @@ npm run lint
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    B("Browser"):::plain --> W
-
-    subgraph W["☁️ One Cloudflare Worker"]
-        direction TB
-        N["Next.js 16 · React 19<br/><sub>server-rendered at the edge via OpenNext</sub>"]:::plain
-        E["🔒 lib/engine.ts — the rule engine<br/><sub>pure functions · 29 tests · the only thing that produces a verdict</sub>"]:::trust
-        N --- E
-    end
-
-    W -. "reads the protocol<br/>writes the notes" .-> AI["Workers AI<br/><sub>Llama 3.3 70B, JSON-schema mode</sub>"]:::cf
-    W -. "runs · decisions · audit trail" .-> D1[("D1<br/><sub>SQLite at the edge</sub>")]:::cf
-
-    classDef plain fill:#F6F7F5,stroke:#C4CAC5,color:#171A19
-    classDef trust fill:#EFEAF5,stroke:#7C5BB0,color:#3B2256,stroke-dasharray:5 3
-    classDef cf fill:#FFF4EC,stroke:#F38020,color:#7A3A05
-    style W fill:#FBFBFA,stroke:#A9B1C2
-```
-
-The trust boundary is not a policy document you promise to follow. It is a module — the only
-code in the system allowed to produce a verdict, and it has no way to reach the network.
+![One Cloudflare Worker running Next.js, with the rule engine behind a trust boundary, calling Workers AI and D1](docs/assets/architecture.svg)
 
 | Concern | Choice |
 | --- | --- |

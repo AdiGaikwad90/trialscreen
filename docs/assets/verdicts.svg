@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" width="900" height="250" role="img" aria-label="Three verdicts: a criterion passes, a missing or stale value is flagged for a human, and a hard criterion outside range fails. Missing data never fails.">
+  <style>
+    .t { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .lab  { font-size: 14px; font-weight: 600; }
+    .val  { font-size: 12.5px; fill: #6E7891; }
+    .src  { font-size: 11px; fill: #9AA2B4; }
+    .why  { font-size: 11.5px; }
+    .card { fill: none; stroke-width: 1.2; rx: 11; }
+    .pass { stroke: #2E6B4F } .passF { fill: #2E6B4F }
+    .flag { stroke: #8A5D0F } .flagF { fill: #8A5D0F }
+    .fail { stroke: #9E2B2B } .failF { fill: #9E2B2B }
+    .row  { opacity: 0 }
+    @media (prefers-reduced-motion: reduce) { .row { opacity: 1 } }
+  </style>
+
+  <g class="row">
+    <animate attributeName="opacity" values="0;1;1;1" keyTimes="0;0.14;0.95;1" dur="7s" begin="0s" repeatCount="indefinite" fill="freeze"/>
+    <rect class="card pass" x="8" y="10" width="884" height="64"/>
+    <circle class="passF" cx="38" cy="42" r="11"/>
+    <text class="t" x="38" y="47" text-anchor="middle" font-size="13" fill="#fff">✓</text>
+    <text class="t lab passF" x="64" y="36">Age 45–75 years</text>
+    <text class="t val" x="64" y="56">observed <tspan font-weight="600">57 y</tspan></text>
+    <text class="t src" x="760" y="36">demographics</text>
+    <text class="t why passF" x="760" y="56">passes</text>
+  </g>
+
+  <g class="row">
+    <animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.2;0.34;0.95;1" dur="7s" begin="0s" repeatCount="indefinite" fill="freeze"/>
+    <rect class="card flag" x="8" y="88" width="884" height="64"/>
+    <circle class="flagF" cx="38" cy="120" r="11"/>
+    <text class="t" x="38" y="125" text-anchor="middle" font-size="13" fill="#fff">⚠</text>
+    <text class="t lab flagF" x="64" y="114">HbA1c 7.0–11.0 %</text>
+    <text class="t val" x="64" y="134">observed <tspan font-weight="600">8.4 %</tspan> · drawn 428 days ago</text>
+    <text class="t src" x="616" y="114">lab hba1c, 2025-07-17</text>
+    <text class="t why flagF" x="616" y="134">in range, but stale — a human looks</text>
+  </g>
+
+  <g class="row">
+    <animate attributeName="opacity" values="0;0;1;1;1" keyTimes="0;0.4;0.54;0.95;1" dur="7s" begin="0s" repeatCount="indefinite" fill="freeze"/>
+    <rect class="card fail" x="8" y="166" width="884" height="64"/>
+    <circle class="failF" cx="38" cy="198" r="11"/>
+    <text class="t" x="38" y="203" text-anchor="middle" font-size="13" fill="#fff">✗</text>
+    <text class="t lab failF" x="64" y="192">eGFR ≥ 45</text>
+    <text class="t val" x="64" y="212">observed <tspan font-weight="600">44.6 mL/min/1.73m²</tspan></text>
+    <text class="t src" x="616" y="192">lab egfr, 2026-08-30</text>
+    <text class="t why failF" x="616" y="212">below the floor — not rounded up</text>
+  </g>
+</svg>

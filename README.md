@@ -1,124 +1,211 @@
+<div align="center">
+
 # TrialScreen
 
-Screen a patient cohort against clinical trial eligibility criteria, and show the evidence
-behind every verdict.
+### Eligibility screening that shows its working.
 
-Recruitment is the single largest source of trial delay: coordinators read each chart by
-hand against 20–50 criteria, and a cohort takes weeks. AI tools exist, but they return a
-verdict without a checkable basis, so investigators and regulators will not act on them.
+Finding patients is the step that makes clinical trials run late.
+This screens a cohort in **114 milliseconds** — and shows the evidence behind every verdict.
 
-TrialScreen splits the problem so that neither half has to be taken on trust:
+[![MIT](https://img.shields.io/badge/licence-MIT-6E7891?style=flat-square)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-6E7891?style=flat-square)](https://nextjs.org)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers%20AI%20%2B%20D1-F38020?style=flat-square)](https://developers.cloudflare.com/workers-ai/)
+[![29 tests](https://img.shields.io/badge/engine%20tests-29%20passing-2E6B4F?style=flat-square)](lib/engine.test.ts)
+[![No PHI](https://img.shields.io/badge/patient%20data-100%25%20synthetic-2E6B4F?style=flat-square)](scripts/generate-cohort.mjs)
 
-```
-eligibility criteria ──▶ [ Workers AI ] ──▶ rules ──▶ coordinator approves the checklist
-                                                          │
-                50 synthetic patients ──────────────────▶ [ RULE ENGINE — no AI ] ──▶ verdicts
-                                                          │
-                                              [ Workers AI ] ──▶ screening note
-```
+</div>
 
-**The model translates. The engine decides.** Eligibility is produced by `lib/engine.ts` —
-pure TypeScript, no I/O, no randomness, and no ambient clock. Every verdict names the value
-it used, where that value came from, and why. The match score is arithmetic printed on the
-screen next to the score.
+<br>
 
-Synthetic patient data throughout. No PHI is used, derived from, or stored anywhere.
+![Screening 50 patients against nine criteria](docs/assets/screening.gif)
 
-A 6-minute narrated walkthrough is in [`demo_video/`](demo_video/), and the deck and video
-production pipeline that produced it is in [`deck/`](deck/).
+<div align="center"><sub>Nine criteria parsed from free text, 50 patients screened, in real time.<br>
+<b><a href="demo_video/trialscreen-walkthrough.mp4">▶ Watch the 6-minute narrated walkthrough</a></b></sub></div>
+
+---
+
+## The problem
+
+A protocol carries 20 to 50 eligibility criteria. To screen one patient, a coordinator opens
+the chart and checks it against every one of them, by hand. Then the next patient. A site
+spends weeks getting to a cohort, and recruitment is the largest single reason trials miss
+their timelines.
+
+AI has been pointed at this before. The models are good enough. What comes out is the
+problem: a verdict with nothing behind it. A regulator cannot inspect a probability, and an
+investigator will not enrol a patient on reasoning they are not allowed to check. So the
+tools stay in pilot.
+
+## The idea
+
+Split the job in three, and let only the deterministic part decide.
+
+![AI translates, a deterministic rule engine decides, AI explains](docs/assets/pipeline.svg)
+
+The model translates English into rules at the front and results back into English at the
+end. Everything in between is arithmetic you can re-derive by hand — `lib/engine.ts` is pure
+functions with no network, no randomness and no ambient clock.
+
+## What a verdict looks like
+
+Three outcomes, and the distinction between them is the whole product.
+
+![A passing criterion, a flagged stale value, and a failed one](docs/assets/verdicts.svg)
+
+**Absence of evidence is never evidence of absence.** A missing lab result raises a question;
+it never disqualifies anyone. Nor does a value that is in range but drawn outside the
+protocol window — that comes back flagged, with the day count.
+
+## What a run produces
+
+![50 screened: 9 eligible, 23 in review, 18 ruled out](docs/assets/funnel.svg)
+
+A flagged patient is not a dead end. The reviewer accepts, excludes, or asks for more
+information; the decision is stored against their name and a timestamp, moves the patient
+between buckets, and **never rewrites the evidence underneath**. A human can override the
+outcome. Nobody can rewrite the record.
+
+---
 
 ## Run it
 
 ```bash
 npm install
-npm run db:migrate:local   # creates the local D1 database and seeds the two demo accounts
+npm run db:migrate:local   # local D1 database, seeds the two demo accounts
 npm run dev                # http://localhost:3000
 ```
 
-Sign in as either demo persona — password `demo1234` for both:
+Sign in with either persona — password `demo1234`:
 
 | Account | Role | Sees |
 | --- | --- | --- |
 | `coordinator@trialscreen.demo` | Clinical coordinator | Screening and the review queue |
 | `lead@trialscreen.demo` | Trial lead | The above, plus the audit log |
 
-Then: **Use the ADVANCE-T2D example → Read the criteria → Screen 50 patients.**
+Then **Use the ADVANCE-T2D example → Read the criteria → Screen 50 patients.**
 
 Workers AI runs against Cloudflare even in local dev, so `npx wrangler login` first. Without
-it the app still works: criteria fall back to the local parser and the UI says so.
+it the app still works — criteria fall back to the local parser and the UI says so.
 
 ```bash
-npm test     # 19 assertions over the rule engine — the file that backs the trust claim
+npm test     # 29 assertions over the rule engine — the file that backs the trust claim
 npm run lint
 ```
 
-## Deploy
+## Architecture
 
-```bash
-npx wrangler d1 create trialscreen        # paste database_id into wrangler.jsonc
-npm run db:migrate                        # apply the schema remotely
-npx wrangler secret put SESSION_SECRET     # replace the demo signing key
-npm run deploy
+```mermaid
+flowchart LR
+    B("Browser"):::plain --> W
+
+    subgraph W["☁️ One Cloudflare Worker"]
+        direction TB
+        N["Next.js 16 · React 19<br/><sub>server-rendered at the edge via OpenNext</sub>"]:::plain
+        E["🔒 lib/engine.ts — the rule engine<br/><sub>pure functions · 29 tests · the only thing that produces a verdict</sub>"]:::trust
+        N --- E
+    end
+
+    W -. "reads the protocol<br/>writes the notes" .-> AI["Workers AI<br/><sub>Llama 3.3 70B, JSON-schema mode</sub>"]:::cf
+    W -. "runs · decisions · audit trail" .-> D1[("D1<br/><sub>SQLite at the edge</sub>")]:::cf
+
+    classDef plain fill:#F6F7F5,stroke:#C4CAC5,color:#171A19
+    classDef trust fill:#EFEAF5,stroke:#7C5BB0,color:#3B2256,stroke-dasharray:5 3
+    classDef cf fill:#FFF4EC,stroke:#F38020,color:#7A3A05
+    style W fill:#FBFBFA,stroke:#A9B1C2
 ```
 
-## How it is built
+The trust boundary is not a policy document you promise to follow. It is a module — the only
+code in the system allowed to produce a verdict, and it has no way to reach the network.
 
 | Concern | Choice |
 | --- | --- |
 | Framework | Next.js 16 App Router on Cloudflare Workers via `@opennextjs/cloudflare` |
 | AI | Workers AI binding, `@cf/meta/llama-3.3-70b-instruct-fp8-fast`, JSON-schema mode |
-| Database | D1 — demo accounts and the screening-run audit trail |
+| Database | D1 — demo accounts, the screening-run audit trail, reviewer decisions |
 | Styling | Tailwind v4, design tokens only, IBM Plex Sans/Mono |
 | Tests | `node:test` over the rule engine |
 
-### Where the interesting decisions are
+## Where the interesting decisions are
 
-`lib/engine.ts` — the deterministic core.
+<details>
+<summary><b>Every criterion is read twice — and it caught two real bugs</b></summary>
+<br>
 
-- A **hard** criterion that fails excludes. A **review** criterion that fails only flags,
-  because concomitant-medication rules are a clinician's call, not a parser's.
-- **Missing data flags, it never fails.** No HbA1c on the chart is an open question, not a
-  disqualification.
-- **Stale data flags too.** A value inside the range but drawn outside the protocol window
-  says so, with the day count.
+Workers AI and a local deterministic parser both read each criterion. Where the two readings
+imply different cohorts, the checklist row turns amber, shows both, and makes a human choose.
+
+Two defects this caught during development, both silent:
+
+- **An exclusion read backwards.** *"Haemoglobin below 10 g/dL"* became `hgb ≤ 10`, which
+  would have excluded 49 of 50 otherwise-eligible patients.
+- **A dropped duration.** *"for at least 5 years"* quietly became a presence check, admitting
+  patients the protocol excludes.
+
+Two invariants are now enforced in code rather than asked of the model, because it got both
+wrong repeatedly: inclusion vs exclusion comes from the protocol's own headings, and a rule
+derived from an exclusion can never require the patient to *have* the disqualifying thing.
+
+</details>
+
+<details>
+<summary><b>The engine's rules, in the order that matters</b></summary>
+<br>
+
+- A **hard** criterion that fails excludes. A **review** criterion only flags — concomitant
+  medication rules are a clinician's call, not a parser's.
+- **Missing data flags, never fails.** No HbA1c on the chart is an open question.
+- **Stale data flags too**, with the day count and the protocol window.
 - **Durations are computed** from the diagnosis date, never stored.
-- **Drugs match on class**, so "no anticoagulants" catches Apixaban as well as Warfarin, and
-  a discontinued one flags for washout rather than passing silently.
+- **Drugs match on class**, so "no anticoagulants" catches Apixaban as well as Warfarin, and a
+  discontinued one flags for washout rather than passing silently.
+- Anything the parser cannot map comes back `unmapped`, switched off, and listed for manual
+  verification — never silently dropped.
 
-`lib/parse.ts` — **every criterion is read twice**, once by Workers AI and once by the
-local parser. Where the two readings imply different cohorts, the checklist row turns amber,
-shows both, and makes a human choose. Two invariants are enforced in code rather than asked
-of the model, because it got both wrong in testing: inclusion vs exclusion comes from the
-protocol's own headings, and a rule derived from an exclusion can never require the patient
-to *have* the thing that disqualifies them.
+</details>
 
-Criteria are parsed **one at a time, in parallel**. One large constrained
-decode takes ~33s and fails as a unit; twelve small ones take ~4s and fail independently, so
-an unreadable line costs one line. Anything the model cannot map to a structured field comes
-back as `unmapped`, switched off, and listed for manual verification — never silently
-dropped.
+<details>
+<summary><b>Why the score is deliberately trivial</b></summary>
+<br>
 
-`lib/parse-local.ts` — a bounded keyword parser that takes over whenever Workers AI is
-unavailable, with a visible notice. The demo degrades honestly instead of dying.
+```
+score = round(100 × (passed + 0.5 × flagged) / criteria)
+```
 
-`lib/score.ts` — `score = round(100 × (passed + 0.5 × flagged) / criteria)`. Deliberately
-trivial, so the UI can print the working and a coordinator can re-derive it by hand.
+No weights, no model, no calibration. The UI prints the working next to the number, so when
+someone asks how it was computed, the answer is already on screen.
 
-`lib/decisions.ts` — a reviewer's call on a flagged patient moves them between buckets but
-never rewrites the evidence: the criterion ledger, the checks and the score are the engine's
-record and survive the override. "Need more information" defers rather than deciding.
-Decisions are stored in D1 against a name and a timestamp, and appear in the export and the
-audit log.
+</details>
 
-### Not in scope
+<details>
+<summary><b>Parsing one criterion at a time, in parallel</b></summary>
+<br>
+
+One large constrained decode takes about 33 seconds and fails as a unit. Twelve small ones
+take about four and fail independently, so an unreadable line costs one line. When Workers AI
+is unreachable entirely, `lib/parse-local.ts` takes over with a visible notice — the demo
+degrades honestly instead of dying.
+
+</details>
+
+## Repository map
+
+| Path | What's in it |
+| --- | --- |
+| `lib/engine.ts` | The deterministic core. Start here. |
+| `lib/parse.ts` | AI parsing, the dual-parse cross-check, the enforced invariants |
+| `lib/engine.test.ts` | 29 assertions — the file that backs the trust claim |
+| `lib/patients.ts` | 50 seeded synthetic patients, 11 hand-authored edge cases |
+| `app/`, `components/` | The screening, review and audit interfaces |
+| `deck/` | The pitch deck and the video pipeline that renders it |
+
+## Not in scope
 
 Real EHR/FHIR ingestion, patient upload, self-service signup, multi-site trials, criterion
-weighting. Production next steps, not hackathon scope.
+weighting. Production next steps, not prototype scope.
 
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
 
-The synthetic cohort in `lib/patients.ts` is generated by `scripts/generate-cohort.mjs`
-from a fixed seed. It is not derived from, and does not reconstruct, any real patient
-record.
+The synthetic cohort in `lib/patients.ts` is generated by `scripts/generate-cohort.mjs` from
+a fixed seed. It is not derived from, and does not reconstruct, any real patient record.

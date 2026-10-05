@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 190" width="900" height="190" role="img" aria-label="Fifty patients screened in 114 milliseconds: nine eligible, twenty-three needing a clinician, eighteen ruled out.">
+  <style>
+    .t { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .n   { font-size: 30px; font-weight: 600; }
+    .cap { font-size: 12px; fill: #8B93A7; }
+    .ms  { font-size: 13px; fill: #8B93A7; }
+    .bar { height: 34px; rx: 4 }
+    @media (prefers-reduced-motion: reduce) { rect.grow { width: attr(data-w) } }
+  </style>
+
+  <text class="t cap" x="8" y="22">50 patients × 9 criteria, evaluated in</text>
+  <text class="t" x="258" y="24" font-size="15" font-weight="600" fill="#7C5BB0">114 ms</text>
+
+  <rect class="bar" x="8" y="40" width="884" height="34" fill="#E6E9EF"/>
+
+  <rect class="bar grow" x="8" y="40" width="0" height="34" fill="#2E6B4F">
+    <animate attributeName="width" from="0" to="159" dur="0.9s" begin="0.2s" fill="freeze"/>
+  </rect>
+  <rect class="bar grow" x="167" y="40" width="0" height="34" fill="#8A5D0F">
+    <animate attributeName="width" from="0" to="406" dur="0.9s" begin="0.5s" fill="freeze"/>
+  </rect>
+  <rect class="bar grow" x="581" y="40" width="0" height="34" fill="#9E2B2B">
+    <animate attributeName="width" from="0" to="311" dur="0.9s" begin="0.8s" fill="freeze"/>
+  </rect>
+
+  <text class="t n" x="8"   y="118" fill="#2E6B4F">9</text>
+  <text class="t cap" x="8"   y="138">eligible now</text>
+  <text class="t n" x="300" y="118" fill="#8A5D0F">23</text>
+  <text class="t cap" x="300" y="138">a clinician decides — in the app</text>
+  <text class="t n" x="640" y="118" fill="#9E2B2B">18</text>
+  <text class="t cap" x="640" y="138">ruled out, each with a reason</text>
+
+  <text class="t cap" x="8" y="174">Every one of those verdicts names the value it used and where that value came from.</text>
+</svg>

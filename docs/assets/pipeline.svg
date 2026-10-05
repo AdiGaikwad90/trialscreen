@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220" width="900" height="220" role="img" aria-label="Criteria are read by AI, decided by a deterministic rule engine, then written up by AI. The model never decides eligibility.">
+  <style>
+    .t { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .kind  { font-size: 11px; letter-spacing: .08em; fill: #8B93A7; }
+    .title { font-size: 15px; font-weight: 600; fill: #6E7891; }
+    .body  { font-size: 12px; fill: #8B93A7; }
+    .box   { fill: none; stroke: #A9B1C2; stroke-width: 1.2; rx: 12; }
+    .hero  { stroke: #7C5BB0; stroke-width: 1.8; fill: #7C5BB010; }
+    .heroT { fill: #7C5BB0; }
+    .wire  { stroke: #A9B1C2; stroke-width: 1.4; fill: none; }
+    .pulse { fill: #7C5BB0; }
+    @media (prefers-reduced-motion: reduce) { .pulse { display: none } }
+  </style>
+
+  <!-- stage 1 -->
+  <rect class="box" x="8" y="40" width="248" height="118"/>
+  <text class="t kind"  x="28" y="68">AI · TRANSLATES</text>
+  <text class="t title" x="28" y="94">Reads the protocol</text>
+  <text class="t body"  x="28" y="116">Free text becomes structured</text>
+  <text class="t body"  x="28" y="134">rules a human approves first.</text>
+
+  <!-- stage 2 — the one that decides -->
+  <rect class="box hero" x="326" y="40" width="248" height="118"/>
+  <text class="t kind heroT" x="346" y="68">NO AI · DECIDES</text>
+  <text class="t title heroT" x="346" y="94">The rule engine</text>
+  <text class="t body"  x="346" y="116">Pure TypeScript. No network,</text>
+  <text class="t body"  x="346" y="134">no randomness, no clock.</text>
+
+  <!-- stage 3 -->
+  <rect class="box" x="644" y="40" width="248" height="118"/>
+  <text class="t kind"  x="664" y="68">AI · EXPLAINS</text>
+  <text class="t title" x="664" y="94">Writes it up</text>
+  <text class="t body"  x="664" y="116">A note composed only from</text>
+  <text class="t body"  x="664" y="134">results the engine produced.</text>
+
+  <!-- connections, with a token travelling the whole path -->
+  <path class="wire" d="M256 99 H326"/>
+  <path class="wire" d="M574 99 H644"/>
+  <path class="wire" d="M318 94 l8 5 -8 5"/>
+  <path class="wire" d="M636 94 l8 5 -8 5"/>
+
+  <circle class="pulse" r="4" cy="99" cx="256">
+    <animate attributeName="cx" values="256;326;326;574;574;644"
+             keyTimes="0;0.18;0.34;0.66;0.82;1" dur="4.2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;1;1;1;1;0"
+             keyTimes="0;0.08;0.3;0.7;0.92;1" dur="4.2s" repeatCount="indefinite"/>
+  </circle>
+
+  <text class="t" x="450" y="196" text-anchor="middle" font-size="16" font-weight="600" fill="#6E7891">
+    The model never decides <tspan fill="#7C5BB0">who is eligible</tspan>.
+  </text>
+</svg>

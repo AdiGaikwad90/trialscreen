@@ -20,7 +20,7 @@ This screens a cohort in **114 milliseconds** — and shows the evidence behind 
 ![Screening 50 patients against nine criteria](docs/assets/screening.gif)
 
 <div align="center"><sub>Nine criteria parsed from free text, 50 patients screened, in real time.<br>
-<b><a href="demo_video/trialscreen-walkthrough.mp4">▶ Watch the 6-minute narrated walkthrough</a></b></sub></div>
+<b><a href="demo_video/trialscreen-walkthrough.mp4">▶ Watch the 6-minute narrated walkthrough</a></b> &nbsp;·&nbsp; 1280×720, 8.9 MB</sub></div>
 
 ---
 
